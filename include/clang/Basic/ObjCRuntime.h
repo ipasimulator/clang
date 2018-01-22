@@ -53,7 +53,11 @@ public:
     GNUstep,
 
     /// 'objfw' is the Objective-C runtime included in ObjFW
-    ObjFW
+    ObjFW,
+
+    /// 'microsoft' is the Objective-C runtime used by the Microsoft WinObjC
+    /// project. It is based on the modern non-fragile GNUstep runtime.
+    Microsoft
   };
 
 private:
@@ -79,13 +83,16 @@ public:
   /// "non-fragile" ABI?
   bool isNonFragile() const {
     switch (getKind()) {
-    case FragileMacOSX: return false;
-    case GCC: return false;
-    case MacOSX: return true;
-    case GNUstep: return true;
-    case ObjFW: return true;
-    case iOS: return true;
-    case WatchOS: return true;
+    case FragileMacOSX:
+    case GCC:
+      return false;
+    case MacOSX:
+    case GNUstep:
+    case ObjFW:
+    case Microsoft:
+    case iOS:
+    case WatchOS:
+      return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -108,6 +115,8 @@ public:
              (getVersion() >= VersionTuple(10, 0)) &&
              (getVersion() < VersionTuple(10, 6)))
         return Arch != llvm::Triple::x86_64;
+    else if (getKind() == Microsoft)
+        return false;
     // Except for deployment target of 10.5 or less,
     // Mac runtimes use legacy dispatch everywhere now.
     return true;
@@ -124,6 +133,7 @@ public:
     case GCC:
     case GNUstep:
     case ObjFW:
+    case Microsoft:
       return true;
     }
     llvm_unreachable("bad kind");
@@ -148,6 +158,7 @@ public:
     case GCC: return false;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Microsoft: return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -167,6 +178,7 @@ public:
     case GCC: return false;
     case GNUstep: return getVersion() >= VersionTuple(1, 6);
     case ObjFW: return true;
+    case Microsoft: return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -217,6 +229,7 @@ public:
     case GCC: return true;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Microsoft: return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -240,6 +253,7 @@ public:
     case WatchOS:
     case GNUstep:
     case ObjFW:
+    case Microsoft:
       return false;
     }
     llvm_unreachable("bad kind");
@@ -263,6 +277,7 @@ public:
     case GCC: return false;
     case GNUstep: return false;
     case ObjFW: return false;
+    case Microsoft: return false;
     }
     llvm_unreachable("bad kind");
   }
@@ -277,6 +292,7 @@ public:
     case GCC: return true;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Microsoft: return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -291,6 +307,7 @@ public:
     case GCC: return true;
     case GNUstep: return true;
     case ObjFW: return true;
+    case Microsoft: return true;
     }
     llvm_unreachable("bad kind");
   }

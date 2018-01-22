@@ -93,7 +93,7 @@ public:
 
 /// GNU Objective-C runtime code generation.  This class implements the parts of
 /// Objective-C support that are specific to the GNU family of runtimes (GCC,
-/// GNUstep and ObjFW).
+/// GNUstep, ObjFW and Microsoft).
 class CGObjCGNU : public CGObjCRuntime {
 protected:
   /// The LLVM module into which output is inserted
@@ -709,7 +709,7 @@ class CGObjCGNUstep : public CGObjCGNU {
     }
 
   public:
-    CGObjCGNUstep(CodeGenModule &Mod) : CGObjCGNU(Mod, 9, 3) {
+    CGObjCGNUstep(CodeGenModule &Mod, unsigned int runtimeABIVersion = 9) : CGObjCGNU(Mod, runtimeABIVersion, 3) {
       const ObjCRuntime &R = CGM.getLangOpts().ObjCRuntime;
 
       llvm::StructType *SlotStructTy =
@@ -866,6 +866,12 @@ public:
                           PtrToObjCSuperTy, SelectorTy);
     MsgLookupSuperFnSRet.init(&CGM, "objc_msg_lookup_super_stret", IMPTy,
                               PtrToObjCSuperTy, SelectorTy);
+  }
+};
+
+class CGObjCMicrosoft: public CGObjCGNUstep {
+public:
+  CGObjCMicrosoft(CodeGenModule &Mod): CGObjCGNUstep(Mod, 9) {
   }
 };
 } // end anonymous namespace
@@ -2938,6 +2944,9 @@ clang::CodeGen::CreateGNUObjCRuntime(CodeGenModule &CGM) {
 
   case ObjCRuntime::ObjFW:
     return new CGObjCObjFW(CGM);
+
+  case ObjCRuntime::Microsoft:
+    return new CGObjCMicrosoft(CGM);
 
   case ObjCRuntime::FragileMacOSX:
   case ObjCRuntime::MacOSX:

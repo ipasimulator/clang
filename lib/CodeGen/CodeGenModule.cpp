@@ -180,6 +180,7 @@ void CodeGenModule::createObjCRuntime() {
   case ObjCRuntime::GNUstep:
   case ObjCRuntime::GCC:
   case ObjCRuntime::ObjFW:
+  case ObjCRuntime::Microsoft:
     ObjCRuntime.reset(CreateGNUObjCRuntime(*this));
     return;
 
