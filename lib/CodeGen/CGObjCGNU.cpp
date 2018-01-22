@@ -463,6 +463,10 @@ protected:
   /// while a bitfield / with the 63rd bit set will be 1<<64.
   llvm::Constant *MakeBitField(ArrayRef<bool> bits);
 
+  /// Creates the module descriptor in global storage; this is a point of
+  /// override for runtimes based on GNU.
+  virtual llvm::GlobalVariable *MakeModuleDescriptor();
+
 public:
   CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
       unsigned protocolClassVersion);
@@ -2373,7 +2377,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   Classes.push_back(ClassStruct);
 }
 
-llvm::Function *CGObjCGNU::ModuleInitFunction() {
+llvm::GlobalVariable *CGObjCGNU::MakeModuleDescriptor() {
   // Only emit an ObjC load function if no Objective-C stuff has been called
   if (Classes.empty() && Categories.empty() && ConstantStrings.empty() &&
       ExistingProtocols.empty() && SelectorTable.empty())
@@ -2514,7 +2518,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 
   // The symbol table is contained in a module which has some version-checking
   // constants
-  llvm::Constant *module = [&] {
+  llvm::GlobalVariable *module = [&] {
     llvm::Type *moduleEltTys[] = {
       LongTy, LongTy, PtrToInt8Ty, symtab->getType(), IntTy
     };
@@ -2554,8 +2558,19 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       }
     }
 
-    return module.finishAndCreateGlobal("", CGM.getPointerAlign());
+    return module.finishAndCreateGlobal("", CGM.getPointerAlign(),
+                                        /*isConstant=*/true,
+                                        llvm::GlobalValue::PrivateLinkage);
   }();
+
+  return module;
+}
+
+llvm::Function *CGObjCGNU::ModuleInitFunction() {
+  llvm::Constant *module = MakeModuleDescriptor();
+  if (module == nullptr) {
+    return nullptr;
+  }
 
   // Create the load function calling the runtime entry point with the module
   // structure
