@@ -182,6 +182,9 @@ protected:
       ConstStr = new llvm::GlobalVariable(TheModule, value->getType(), true,
                                           llvm::GlobalValue::LinkOnceODRLinkage,
                                           value, Name);
+      if (CGM.supportsCOMDAT()) {
+        ConstStr->setComdat(TheModule.getOrInsertComdat(Name));
+      }
     }
     return llvm::ConstantExpr::getGetElementPtr(ConstStr->getValueType(),
                                                 ConstStr, Zeros);
@@ -874,8 +877,17 @@ void CGObjCGNU::EmitClassRef(const std::string &className) {
                                            llvm::GlobalValue::ExternalLinkage,
                                            nullptr, symbolName);
   }
-  new llvm::GlobalVariable(TheModule, ClassSymbol->getType(), true,
-    llvm::GlobalValue::WeakAnyLinkage, ClassSymbol, symbolRef);
+  llvm::GlobalVariable *classRef = new llvm::GlobalVariable(TheModule,
+    ClassSymbol->getType(), true, llvm::GlobalValue::LinkOnceODRLinkage,
+    ClassSymbol, symbolRef);
+
+  if (CGM.supportsCOMDAT()) {
+    // PE/COFF require a COMDAT section to fold these together; the linker will
+    // not do so otherwise.
+    classRef->setComdat(TheModule.getOrInsertComdat(symbolRef));
+  }
+
+  CGM.addCompilerUsedGlobal(classRef);
 }
 
 static std::string SymbolNameForMethod( StringRef ClassName,
@@ -1926,9 +1938,12 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   Elements.add(OptionalClassMethodList);
   Elements.add(PropertyList);
   Elements.add(OptionalPropertyList);
+  llvm::GlobalVariable *protocol = Elements.finishAndCreateGlobal(
+      ".objc_protocol", CGM.getPointerAlign(), false, llvm::GlobalVariable::WeakODRLinkage);
+  protocol->setComdat(TheModule.getOrInsertComdat(protocol->getName()));
   ExistingProtocols[ProtocolName] =
     llvm::ConstantExpr::getBitCast(
-      Elements.finishAndCreateGlobal(".objc_protocol", CGM.getPointerAlign()),
+      protocol,
       IdTy);
 }
 void CGObjCGNU::GenerateProtocolHolderCategory() {
