@@ -204,21 +204,8 @@ protected:
   }
 
   /// Returns a property name and encoding string.
-  llvm::Constant *MakePropertyEncodingString(const ObjCPropertyDecl *PD,
-                                             const Decl *Container) {
-    const ObjCRuntime &R = CGM.getLangOpts().ObjCRuntime;
-    if ((R.getKind() == ObjCRuntime::GNUstep) &&
-        (R.getVersion() >= VersionTuple(1, 6))) {
-      std::string NameAndAttributes;
-      std::string TypeStr =
-        CGM.getContext().getObjCEncodingForPropertyDecl(PD, Container);
-      NameAndAttributes += '\0';
-      NameAndAttributes += TypeStr.length() + 3;
-      NameAndAttributes += TypeStr;
-      NameAndAttributes += '\0';
-      NameAndAttributes += PD->getNameAsString();
-      return MakeConstantString(NameAndAttributes);
-    }
+  virtual llvm::Constant *MakePropertyEncodingString(const ObjCPropertyDecl *PD,
+                                                     const Decl *Container) {
     return MakeConstantString(PD->getNameAsString());
   }
 
@@ -697,6 +684,23 @@ class CGObjCGNUstep : public CGObjCGNU {
 
       return Builder.CreateAlignedLoad(Builder.CreateStructGEP(nullptr, slot, 4),
                                        CGF.getPointerAlign());
+    }
+
+    llvm::Constant *MakePropertyEncodingString(const ObjCPropertyDecl *PD,
+                                               const Decl *Container) override {
+      const ObjCRuntime &R = CGM.getLangOpts().ObjCRuntime;
+      if (R.getVersion() >= VersionTuple(1, 6)) {
+        std::string NameAndAttributes;
+        std::string TypeStr =
+          CGM.getContext().getObjCEncodingForPropertyDecl(PD, Container);
+        NameAndAttributes += '\0';
+        NameAndAttributes += TypeStr.length() + 3;
+        NameAndAttributes += TypeStr;
+        NameAndAttributes += '\0';
+        NameAndAttributes += PD->getNameAsString();
+        return MakeConstantString(NameAndAttributes);
+      }
+      return CGObjCGNU::MakePropertyEncodingString(PD, Container);
     }
 
   public:
