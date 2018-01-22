@@ -39,6 +39,7 @@ raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {
   case ObjCRuntime::GNUstep: out << "gnustep"; break;
   case ObjCRuntime::GCC: out << "gcc"; break;
   case ObjCRuntime::ObjFW: out << "objfw"; break;
+  case ObjCRuntime::Microsoft: out << "microsoft"; break;
   }
   if (value.getVersion() > VersionTuple(0)) {
     out << '-' << value.getVersion();
@@ -80,6 +81,9 @@ bool ObjCRuntime::tryParse(StringRef input) {
   } else if (runtimeName == "objfw") {
     kind = ObjCRuntime::ObjFW;
     Version = VersionTuple(0, 8);
+  } else if (runtimeName == "microsoft") {
+    kind = ObjCRuntime::Microsoft;
+    Version = VersionTuple(1, 9);
   } else {
     return true;
   }

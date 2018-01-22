@@ -649,6 +649,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       Builder.defineMacro("__OBJFW_RUNTIME_ABI__",
                           Twine(tuple.getMajor() * 10000 + minor * 100 +
                                 subminor));
+    } else if (LangOpts.ObjCRuntime.getKind() == ObjCRuntime::Microsoft) {
+      Builder.defineMacro("__MICROSOFT_OBJC_RUNTIME_ABI__");
     }
 
     Builder.defineMacro("IBOutlet", "__attribute__((iboutlet))");

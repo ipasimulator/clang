@@ -147,6 +147,8 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
     if (L.SEHExceptions)
       return EHPersonality::GNU_ObjC_SEH;
     return EHPersonality::GNU_ObjC;
+  case ObjCRuntime::Microsoft:
+    return EHPersonality::MSVC_CxxFrameHandler3;
   }
   llvm_unreachable("bad runtime kind");
 }
@@ -190,6 +192,10 @@ static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
   case ObjCRuntime::GCC:
   case ObjCRuntime::ObjFW:
     return getObjCPersonality(T, L);
+
+  // Microsoft's ABI supports Objective-C exceptions through CxxFrameHandler
+  case ObjCRuntime::Microsoft:
+    return EHPersonality::MSVC_CxxFrameHandler3;
   }
   llvm_unreachable("bad runtime kind");
 }
