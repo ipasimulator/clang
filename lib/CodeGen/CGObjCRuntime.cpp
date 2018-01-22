@@ -22,6 +22,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -137,6 +138,20 @@ namespace {
   };
 }
 
+namespace {
+struct CatchRetScope final : EHScopeStack::Cleanup {
+  llvm::CatchPadInst *CPI;
+
+  CatchRetScope(llvm::CatchPadInst *CPI) : CPI(CPI) {}
+
+  void Emit(CodeGenFunction &CGF, Flags flags) override {
+    llvm::BasicBlock *BB = CGF.createBasicBlock("catchret.dest");
+    CGF.Builder.CreateCatchRet(CPI, BB);
+    CGF.EmitBlock(BB);
+  }
+};
+}
+
 
 void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
                                      const ObjCAtTryStmt &S,
@@ -154,6 +169,8 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
                       beginCatchFn, endCatchFn, exceptionRethrowFn);
 
   SmallVector<CatchHandler, 8> Handlers;
+
+  EHCatchScope *CatchScope = nullptr;
 
   // Enter the catch, if there is one.
   if (S.getNumCatchStmts()) {
@@ -185,6 +202,19 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
   // Emit the try body.
   CGF.EmitStmt(S.getTryBody());
 
+  // If the catch was not required, bail out now.
+  if (S.getNumCatchStmts()) {
+    EHCatchScope &CatchScope = cast<EHCatchScope>(*CGF.EHStack.begin());
+    if (!CatchScope.hasEHBranches()) {
+      CatchScope.clearHandlerBlocks();
+      CGF.EHStack.popCatch();
+      if(S.getFinallyStmt()) {
+        FinallyInfo.exit(CGF);
+      }
+      return;
+    }
+  }
+
   // Leave the try.
   if (S.getNumCatchStmts())
     CGF.popCatchScope();
@@ -197,14 +227,32 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
     CatchHandler &Handler = Handlers[I];
 
     CGF.EmitBlock(Handler.Block);
+
+    CodeGenFunction::LexicalScope cleanups(CGF, Handler.Body->getSourceRange());
+
+    llvm::CatchPadInst *CPI = nullptr;
+    llvm::SaveAndRestore<llvm::Instruction *>
+        RestoreCurrentFuncletPad(CGF.CurrentFuncletPad);
+    if (EHPersonality::get(CGF).usesFuncletPads()) {
+      CPI = cast<llvm::CatchPadInst>(Handler.Block->getFirstNonPHI());
+      assert(CPI &&
+        "a personality that requires funclets must have a funclet pad in"
+        " objective-c catch");
+
+      CGF.CurrentFuncletPad = CPI;
+      CGF.EHStack.pushCleanup<CatchRetScope>(NormalCleanup, CPI);
+
+      if (Handler.Variable) {
+        CPI->setArgOperand(2, CGF.getExceptionSlot().getPointer());
+      }
+    }
+
     llvm::Value *RawExn = CGF.getExceptionFromSlot();
 
     // Enter the catch.
     llvm::Value *Exn = RawExn;
     if (beginCatchFn)
       Exn = CGF.EmitNounwindRuntimeCall(beginCatchFn, RawExn, "exn.adjusted");
-
-    CodeGenFunction::LexicalScope cleanups(CGF, Handler.Body->getSourceRange());
 
     if (endCatchFn) {
       // Add a cleanup to leave the catch.
