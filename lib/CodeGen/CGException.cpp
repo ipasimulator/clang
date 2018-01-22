@@ -825,11 +825,11 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
     EHCatchScope &catchScope = cast<EHCatchScope>(*I);
     for (unsigned hi = 0, he = catchScope.getNumHandlers(); hi != he; ++hi) {
       EHCatchScope::Handler handler = catchScope.getHandler(hi);
-      assert(handler.Type.Flags == 0 &&
-             "landingpads do not support catch handler flags");
+      //assert((handler.Type.Flags == 0 || handler.Type.Flags == 0x40) &&
+             //"landingpads do not support catch handler flags");
 
       // If this is a catch-all, register that and abort.
-      if (!handler.Type.RTTI) {
+      if (!handler.Type.RTTI || handler.Type.Flags == 0x40 /* MSVC flags for catch-all */) {
         assert(!hasCatchAll);
         hasCatchAll = true;
         goto done;
