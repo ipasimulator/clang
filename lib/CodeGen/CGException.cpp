@@ -1271,6 +1271,21 @@ void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
 
     llvm::Value *exn = nullptr;
 
+    llvm::CatchPadInst *CPI = nullptr;
+    SaveAndRestore<llvm::Instruction *> RestoreCurrentFuncletPad(
+        CGF.CurrentFuncletPad);
+
+    if (EHPersonality::get(CGF).usesFuncletPads()) {
+      // Capture the caught exception off the catchpad into the existing
+      // exn slot
+      CPI = cast<llvm::CatchPadInst>(catchBB->getFirstNonPHI());
+
+      CGF.CurrentFuncletPad = CPI;
+
+      if (SavedExnVar || BeginCatchFn)
+        CPI->setArgOperand(2, CGF.getExceptionSlot().getPointer());
+    }
+
     // If there's a begin-catch function, call it.
     if (BeginCatchFn) {
       exn = CGF.getExceptionFromSlot();
@@ -1286,7 +1301,13 @@ void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
     // Tell the cleanups in the finally block that we're do this for EH.
     CGF.Builder.CreateFlagStore(true, ForEHVar);
 
-    // Thread a jump through the finally cleanup.
+    // Thread a jump through the finally cleanup (and catchret, if required)
+    if (CPI) {
+      llvm::BasicBlock *BB = CGF.createBasicBlock("catchret.dest");
+      CGF.Builder.CreateCatchRet(CPI, BB);
+      CGF.EmitBlock(BB);
+    }
+
     CGF.EmitBranchThroughCleanup(RethrowDest);
 
     CGF.Builder.restoreIP(savedIP);
