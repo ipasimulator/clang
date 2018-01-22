@@ -325,7 +325,7 @@ namespace {
       : SyncExitFn(SyncExitFn), SyncArg(SyncArg) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) override {
-      CGF.Builder.CreateCall(SyncExitFn, SyncArg)->setDoesNotThrow();
+      CGF.EmitNounwindRuntimeCall(SyncExitFn, SyncArg);
     }
   };
 }
