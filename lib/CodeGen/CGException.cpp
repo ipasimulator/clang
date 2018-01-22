@@ -913,7 +913,7 @@ static void emitCatchPadBlock(CodeGenFunction &CGF, EHCatchScope &CatchScope) {
 
     CGF.Builder.SetInsertPoint(Handler.Block);
 
-    if (EHPersonality::get(CGF).isMSVCXXPersonality()) {
+    if (EHPersonality::get(CGF).isMSVCPersonality()) {
       CGF.Builder.CreateCatchPad(
           CatchSwitch, {TypeInfo.RTTI, CGF.Builder.getInt32(TypeInfo.Flags),
                         llvm::Constant::getNullValue(CGF.VoidPtrTy)});
