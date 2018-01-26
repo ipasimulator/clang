@@ -3990,6 +3990,12 @@ AlwaysInlineAttr *Sema::mergeAlwaysInlineAttr(Decl *D, SourceRange Range,
     return nullptr;
   }
 
+  if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+      hasFunctionProto(D) && isFunctionOrMethodVariadic(D)) {
+    Diag(Range.getBegin(), diag::warn_always_inline_on_variadic) << Ident;
+    return nullptr;
+  }
+
   if (D->hasAttr<AlwaysInlineAttr>())
     return nullptr;
 
