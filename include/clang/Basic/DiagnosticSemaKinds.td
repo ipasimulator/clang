@@ -2707,6 +2707,9 @@ def warn_nocf_check_attribute_ignored :
 def warn_attribute_after_definition_ignored : Warning<
   "attribute %0 after definition is ignored">,
    InGroup<IgnoredAttributes>;
+def warn_always_inline_on_variadic : Warning<
+  "inlining attribute %0 ignored on variadic function">,
+   InGroup<IgnoredAttributes>;
 def warn_unknown_attribute_ignored : Warning<
   "unknown attribute %0 ignored">, InGroup<UnknownAttributes>;
 def warn_cxx11_gnu_attribute_on_type : Warning<
