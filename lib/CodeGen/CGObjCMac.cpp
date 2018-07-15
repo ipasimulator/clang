@@ -17,7 +17,6 @@
 #include "CGRecordLayout.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "CGCXXABI.h" // [port] CHANGED: Needed for implementation of `CGObjCIpaSim`.
 #include "clang/CodeGen/ConstantInitBuilder.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -1655,15 +1654,9 @@ public:
 };
 
 // [port] CHANGED: [ipasim-objc-runtime].
-// [port] Inspired by CGObjCMicrosoft.
-// [port] TODO: Should all those things really be done? If so, document why.
 class CGObjCIpaSim : public CGObjCNonFragileABIMac {
 public:
   CGObjCIpaSim(CodeGenModule &cgm): CGObjCNonFragileABIMac(cgm) {
-  }
-
-  llvm::Constant *GetEHType(QualType T) override {
-    return CGM.getCXXABI().getAddrOfRTTIDescriptor(T);
   }
 };
 

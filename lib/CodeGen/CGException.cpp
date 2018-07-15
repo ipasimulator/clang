@@ -129,6 +129,7 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
   case ObjCRuntime::WatchOS:
+  case ObjCRuntime::IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
     return EHPersonality::NeXT_ObjC;
   case ObjCRuntime::GNUstep:
     if (L.ObjCRuntime.getVersion() >= VersionTuple(1, 7))
@@ -142,9 +143,6 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
       return EHPersonality::GNU_ObjC_SEH;
     return EHPersonality::GNU_ObjC;
   case ObjCRuntime::Microsoft:
-  // [port] CHANGED: [ipasim-objc-runtime].
-  // [port] TODO: Is this OK?
-  case ObjCRuntime::IpaSim:
     return EHPersonality::MSVC_CxxFrameHandler3;
   }
   llvm_unreachable("bad runtime kind");
@@ -175,6 +173,7 @@ static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
   case ObjCRuntime::WatchOS:
+  case ObjCRuntime::IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
     return getObjCPersonality(T, L);
 
   case ObjCRuntime::GNUstep:
@@ -188,7 +187,6 @@ static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
 
   // Microsoft's ABI supports Objective-C exceptions through CxxFrameHandler
   case ObjCRuntime::Microsoft:
-  case ObjCRuntime::IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
     return EHPersonality::MSVC_CxxFrameHandler3;
   }
   llvm_unreachable("bad runtime kind");
