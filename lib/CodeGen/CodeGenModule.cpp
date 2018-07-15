@@ -188,6 +188,7 @@ void CodeGenModule::createObjCRuntime() {
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
   case ObjCRuntime::WatchOS:
+  case ObjCRuntime::IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
     ObjCRuntime.reset(CreateMacObjCRuntime(*this));
     return;
   }

@@ -35,6 +35,7 @@ raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {
   case ObjCRuntime::GCC: out << "gcc"; break;
   case ObjCRuntime::ObjFW: out << "objfw"; break;
   case ObjCRuntime::Microsoft: out << "microsoft"; break;
+  case ObjCRuntime::IpaSim: out << "ipasim"; break; // [port] CHANGED: [ipasim-objc-runtime].
   }
   if (value.getVersion() > VersionTuple(0)) {
     out << '-' << value.getVersion();
@@ -79,6 +80,8 @@ bool ObjCRuntime::tryParse(StringRef input) {
   } else if (runtimeName == "microsoft") {
     kind = ObjCRuntime::Microsoft;
     Version = VersionTuple(1, 9);
+  } else if (runtimeName == "ipasim") { // [port] CHANGED: [ipasim-objc-runtime].
+    kind = ObjCRuntime::IpaSim;
   } else {
     return true;
   }
