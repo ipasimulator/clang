@@ -57,7 +57,11 @@ public:
 
     /// 'microsoft' is the Objective-C runtime used by the Microsoft WinObjC
     /// project. It is based on the modern non-fragile GNUstep runtime.
-    Microsoft
+    Microsoft,
+
+    // [port] CHANGED: [ipasim-objc-runtime].
+    /// `ipasim` is the port of Apple's Objective-C runtime for Windows.
+    IpaSim
   };
 
 private:
@@ -90,6 +94,7 @@ public:
     case GNUstep:
     case ObjFW:
     case Microsoft:
+    case IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
     case iOS:
     case WatchOS:
       return true;
@@ -115,7 +120,8 @@ public:
              (getVersion() >= VersionTuple(10, 0)) &&
              (getVersion() < VersionTuple(10, 6)))
         return Arch != llvm::Triple::x86_64;
-    else if (getKind() == Microsoft)
+    // [port] CHANGED: [ipasim-objc-runtime].
+    else if (getKind() == Microsoft || getKind() == IpaSim)
         return false;
     // Except for deployment target of 10.5 or less,
     // Mac runtimes use legacy dispatch everywhere now.
@@ -129,6 +135,7 @@ public:
     case MacOSX:
     case iOS:
     case WatchOS:
+    case IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
       return false;
     case GCC:
     case GNUstep:
@@ -159,6 +166,7 @@ public:
     case GNUstep: return true;
     case ObjFW: return true;
     case Microsoft: return true;
+    case IpaSim: return true; // [port] CHANGED: [ipasim-objc-runtime].
     }
     llvm_unreachable("bad kind");
   }
@@ -174,6 +182,7 @@ public:
     case MacOSX: return getVersion() >= VersionTuple(10, 7);
     case iOS: return getVersion() >= VersionTuple(5);
     case WatchOS: return true;
+    case IpaSim: return true; // [port] CHANGED: [ipasim-objc-runtime].
 
     case GCC: return false;
     case GNUstep: return getVersion() >= VersionTuple(1, 6);
@@ -191,6 +200,7 @@ public:
       case iOS:
         return (getVersion() >= VersionTuple(6));
       case WatchOS:
+      case IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
         return true;
       case GNUstep:
         return getVersion() >= VersionTuple(1, 7);
@@ -222,6 +232,7 @@ public:
     case MacOSX: return getVersion() >= VersionTuple(10, 8);
     case iOS: return getVersion() >= VersionTuple(6);
     case WatchOS: return true;
+    case IpaSim: return true; // [port] CHANGED: [ipasim-objc-runtime].
 
     // This is really a lie, because some implementations and versions
     // of the runtime do not support ARC.  Probably -fgnu-runtime
@@ -254,6 +265,7 @@ public:
     case GNUstep:
     case ObjFW:
     case Microsoft:
+    case IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
       return false;
     }
     llvm_unreachable("bad kind");
@@ -274,6 +286,7 @@ public:
     case MacOSX: return getVersion() >= VersionTuple(10, 8);
     case iOS: return getVersion() >= VersionTuple(5);
     case WatchOS: return true;
+    case IpaSim: return true; // [port] CHANGED: [ipasim-objc-runtime].
     case GCC: return false;
     case GNUstep: return false;
     case ObjFW: return false;
@@ -293,6 +306,7 @@ public:
     case GNUstep: return true;
     case ObjFW: return true;
     case Microsoft: return true;
+    case IpaSim: return true; // [port] CHANGED: [ipasim-objc-runtime].
     }
     llvm_unreachable("bad kind");
   }
@@ -308,6 +322,7 @@ public:
     case GNUstep: return true;
     case ObjFW: return true;
     case Microsoft: return true;
+    case IpaSim: return true; // [port] CHANGED: [ipasim-objc-runtime].
     }
     llvm_unreachable("bad kind");
   }
@@ -318,6 +333,7 @@ public:
     case MacOSX:
     case iOS:
     case WatchOS:
+    case IpaSim: // [port] CHANGED: [ipasim-objc-runtime].
       return true;
     case GNUstep:
       return getVersion() >= VersionTuple(1, 7);
@@ -335,6 +351,8 @@ public:
       return getVersion() >= VersionTuple(9);
     case WatchOS:
       return getVersion() >= VersionTuple(2);
+    case IpaSim:
+      return true; // [port] CHANGED: [ipasim-objc-runtime].
     case GNUstep:
       return false;
 
@@ -354,6 +372,8 @@ public:
       return getVersion() >= VersionTuple(9);
     case WatchOS:
       return getVersion() >= VersionTuple(2);
+    case IpaSim:
+      return true; // [port] CHANGED: [ipasim-objc-runtime].
     }
   }
 

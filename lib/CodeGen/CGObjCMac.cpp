@@ -1653,6 +1653,13 @@ public:
                               const ObjCIvarDecl *Ivar) override;
 };
 
+// [port] CHANGED: [ipasim-objc-runtime].
+class CGObjCIpaSim : public CGObjCNonFragileABIMac {
+public:
+  CGObjCIpaSim(CodeGenModule &cgm): CGObjCNonFragileABIMac(cgm) {
+  }
+};
+
 /// A helper class for performing the null-initialization of a return
 /// value.
 struct NullReturnState {
@@ -7602,6 +7609,10 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
   case ObjCRuntime::iOS:
   case ObjCRuntime::WatchOS:
     return new CGObjCNonFragileABIMac(CGM);
+
+  // [port] CHANGED: [ipasim-objc-runtime].
+  case ObjCRuntime::IpaSim:
+    return new CGObjCIpaSim(CGM);
 
   case ObjCRuntime::GNUstep:
   case ObjCRuntime::GCC:
