@@ -1240,9 +1240,11 @@ static llvm::Constant *buildGlobalBlock(CodeGenModule &CGM,
   if (CGM.getContext().getLangOpts().OpenCL)
     AddrSpace = CGM.getContext().getTargetAddressSpace(LangAS::opencl_global);
 
+  // [port] CHANGED: Passed `false` as parameter `constant`, [fixbind].
+  // [port] We need to fix field `isa` at runtime.
   llvm::Constant *literal = fields.finishAndCreateGlobal(
       "__block_literal_global", blockInfo.BlockAlign,
-      /*constant*/ true, llvm::GlobalVariable::InternalLinkage, AddrSpace);
+      /*constant*/ false, llvm::GlobalVariable::InternalLinkage, AddrSpace);
 
   // Return a constant of the appropriately-casted type.
   llvm::Type *RequiredType =
