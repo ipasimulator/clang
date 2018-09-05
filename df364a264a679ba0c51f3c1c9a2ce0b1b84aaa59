@@ -1,0 +1,10 @@
+[ver:1,total:1560]
+utils/TableGen/ClangAttrEmitter.cpp:1005,1536166800:60,1536174000:945,m
+lib/AST/DeclPrinter.cpp:240,1536166800:180,1536174000:60,r
+include/clang/Basic/Attr.td:150,1536174000:150,r
+include/clang/AST/DeclVisitor.h:75,1536174000:75,r
+lib/AST/StmtPrinter.cpp:30,1536174000:30,r
+lib/AST/AttrImpl.cpp:15,1536174000:15,r
+docs/ThreadSafetyAnalysis.rst:15,1536174000:15,r
+include/clang/AST/StmtVisitor.h:15,1536174000:15,r
+test/PCH/thread-safety-attrs.cpp:15,1536174000:15,r
