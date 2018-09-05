@@ -1,0 +1,6 @@
+[ver:1,total:3420]
+lib/AST/TypePrinter.cpp:2361,1536159600:2241,1536163200:120,m
+include/clang/AST/TypeNodes.def:608,1536159600:608,r
+include/clang/AST/Type.h:241,1536159600:241,r
+lib/AST/DeclPrinter.cpp:180,1536148800:180,r
+lib/AST/StmtPrinter.cpp:30,1536159600:30,r
