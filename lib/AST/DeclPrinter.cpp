@@ -551,13 +551,6 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 }
 
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
-  // [port] CHANGED: Added this `if`. See [pretty-print].
-  if (Policy.PolishForInlineDeclaration) {
-    Out << "extern";
-    prettyPrintAttributes(D);
-    Out << " ";
-  }
-
   if (!D->getDescribedFunctionTemplate() &&
       !D->isFunctionTemplateSpecialization())
     prettyPrintPragmas(D);
@@ -718,11 +711,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     Ty.print(Out, Policy, Proto);
   }
 
-  // [port] CHANGED: Added `!Policy.PolishForInlineDeclaration`. See
-  // [port] [pretty-print].
-  if (!Policy.PolishForInlineDeclaration) {
-    prettyPrintAttributes(D);
-  }
+  prettyPrintAttributes(D);
 
   if (D->isPure())
     Out << " = 0";
