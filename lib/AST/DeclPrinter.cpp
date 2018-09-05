@@ -545,6 +545,13 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 }
 
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
+  // [port] CHANGED: Added this `if`. See [pretty-print].
+  if (Policy.PolishForInlineDeclaration) {
+    Out << "extern";
+    prettyPrintAttributes(D);
+    Out << " ";
+  }
+
   if (!D->getDescribedFunctionTemplate() &&
       !D->isFunctionTemplateSpecialization())
     prettyPrintPragmas(D);
@@ -570,7 +577,10 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       llvm_unreachable("invalid for functions");
     }
 
-    if (D->isInlineSpecified())  Out << "inline ";
+    // [port] CHANGED: Added `!Policy.PolishForInlineDeclaration`. See
+    // [port] [pretty-print].
+    if (D->isInlineSpecified() && !Policy.PolishForInlineDeclaration)
+      Out << "inline ";
     if (D->isVirtualAsWritten()) Out << "virtual ";
     if (D->isModulePrivate())    Out << "__module_private__ ";
     if (D->isConstexpr() && !D->isExplicitlyDefaulted()) Out << "constexpr ";
@@ -678,7 +688,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         FT->getNoexceptExpr()->printPretty(EOut, nullptr, SubPolicy,
                                            Indentation);
         EOut.flush();
-        Proto += EOut.str();
+        // [port] CHANGED: Commented out. `EOut` is already included in `Proto`.
+        //Proto += EOut.str();
         Proto += ")";
       }
     }
@@ -701,7 +712,11 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     Ty.print(Out, Policy, Proto);
   }
 
-  prettyPrintAttributes(D);
+  // [port] CHANGED: Added `!Policy.PolishForInlineDeclaration`. See
+  // [port] [pretty-print].
+  if (!Policy.PolishForInlineDeclaration) {
+    prettyPrintAttributes(D);
+  }
 
   if (D->isPure())
     Out << " = 0";

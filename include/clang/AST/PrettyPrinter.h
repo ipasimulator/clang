@@ -37,6 +37,7 @@ public:
 /// It is very frequently copied.
 struct PrintingPolicy {
   /// \brief Create a default printing policy for the specified language.
+  // [port] CHANGED: Added `PolishForInlineDeclaration`. See [pretty-print].
   PrintingPolicy(const LangOptions &LO)
     : Indentation(2), SuppressSpecifiers(false),
       SuppressTagKeyword(LO.CPlusPlus),
@@ -52,7 +53,7 @@ struct PrintingPolicy {
       Half(LO.Half), MSWChar(LO.MicrosoftExt && !LO.WChar),
       IncludeNewlines(true), MSVCFormatting(false),
       ConstantsAsWritten(false), SuppressImplicitBase(false),
-      FullyQualifiedName(false) { }
+      FullyQualifiedName(false), PolishForInlineDeclaration(false) {}
 
   /// Adjust this printing policy for cases where it's known that we're
   /// printing C++ code (for instance, if AST dumping reaches a C++-only
@@ -225,6 +226,9 @@ struct PrintingPolicy {
   /// When true, print the fully qualified name of function declarations.
   /// This is the opposite of SuppressScope and thus overrules it.
   bool FullyQualifiedName : 1;
+
+  // [port] CHANGED: Added. See [pretty-print].
+  bool PolishForInlineDeclaration : 1;
 };
 
 } // end namespace clang
