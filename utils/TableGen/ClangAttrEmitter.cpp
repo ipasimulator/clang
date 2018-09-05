@@ -1112,6 +1112,13 @@ namespace {
     }
 
     void writeHasChildren(raw_ostream &OS) const override { OS << "true"; }
+
+    // [port] CHANGED: Added this function. See [pretty-print].
+    void writeValue(raw_ostream &OS) const override {
+      OS << "\";\n"
+         << "    printExprAsWritten(OS, get" << getUpperName() << "(), &C);\n"
+         << "    OS << \"";
+    }
   };
 
   class VariadicExprArgument : public VariadicArgument {
