@@ -208,7 +208,8 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
 
 void StmtPrinter::VisitAttributedStmt(AttributedStmt *Node) {
   for (const auto *Attr : Node->getAttrs()) {
-    Attr->printPretty(OS, Policy);
+    // [port] CHANGED: Passed parameter `Context`. See [pretty-print].
+    Attr->printPretty(OS, Policy, *Context);
   }
 
   PrintStmt(Node->getSubStmt(), 0);
