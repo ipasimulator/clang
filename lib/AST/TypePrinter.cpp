@@ -124,6 +124,8 @@ namespace {
     void AppendScope(DeclContext *DC, raw_ostream &OS);
     void printTag(TagDecl *T, raw_ostream &OS);
     void printFunctionAfter(const FunctionType::ExtInfo &Info, raw_ostream &OS);
+    // [port] CHANGED: Added this function. See [pretty-print].
+    bool printAttribute(const AttributedType *T, raw_ostream &OS);
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT) \
     void print##CLASS##Before(const CLASS##Type *T, raw_ostream &OS); \
@@ -1276,100 +1278,23 @@ void TypePrinter::printPackExpansionAfter(const PackExpansionType *T,
   OS << "...";
 }
 
-void TypePrinter::printAttributedBefore(const AttributedType *T,
-                                        raw_ostream &OS) {
-  // Prefer the macro forms of the GC and ownership qualifiers.
-  if (T->getAttrKind() == AttributedType::attr_objc_gc ||
-      T->getAttrKind() == AttributedType::attr_objc_ownership)
-    return printBefore(T->getEquivalentType(), OS);
-
-  if (T->getAttrKind() == AttributedType::attr_objc_kindof)
-    OS << "__kindof ";
-
-  printBefore(T->getModifiedType(), OS);
-
-  if (T->isMSTypeSpec()) {
-    switch (T->getAttrKind()) {
-    default: return;
-    case AttributedType::attr_ptr32: OS << " __ptr32"; break;
-    case AttributedType::attr_ptr64: OS << " __ptr64"; break;
-    case AttributedType::attr_sptr: OS << " __sptr"; break;
-    case AttributedType::attr_uptr: OS << " __uptr"; break;
-    }
-    spaceBeforePlaceHolder(OS);
+// [port] CHANGED: Refactored some code from `TypePrinter::printAttributedAfter`
+// [port] into this function. See [pretty-print].
+bool TypePrinter::printAttribute(const AttributedType *T, raw_ostream &OS) {
+  // [port] CHANGED: Added this `if` (not the `else` branch, though). See
+  // [port] [pretty-print].
+  if (Policy.PolishForInlineDeclaration) {
+    OS << "__attribute__((";
+  } else {
+    OS << " __attribute__((";
   }
-
-  // Print nullability type specifiers.
-  if (T->getAttrKind() == AttributedType::attr_nonnull ||
-      T->getAttrKind() == AttributedType::attr_nullable ||
-      T->getAttrKind() == AttributedType::attr_null_unspecified) {
-    if (T->getAttrKind() == AttributedType::attr_nonnull)
-      OS << " _Nonnull";
-    else if (T->getAttrKind() == AttributedType::attr_nullable)
-      OS << " _Nullable";
-    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
-      OS << " _Null_unspecified";
-    else
-      llvm_unreachable("unhandled nullability");
-    spaceBeforePlaceHolder(OS);
-  }
-}
-
-void TypePrinter::printAttributedAfter(const AttributedType *T,
-                                       raw_ostream &OS) {
-  // Prefer the macro forms of the GC and ownership qualifiers.
-  if (T->getAttrKind() == AttributedType::attr_objc_gc ||
-      T->getAttrKind() == AttributedType::attr_objc_ownership)
-    return printAfter(T->getEquivalentType(), OS);
-
-  if (T->getAttrKind() == AttributedType::attr_objc_kindof)
-    return;
-
-  // TODO: not all attributes are GCC-style attributes.
-  if (T->isMSTypeSpec())
-    return;
-
-  // Nothing to print after.
-  if (T->getAttrKind() == AttributedType::attr_nonnull ||
-      T->getAttrKind() == AttributedType::attr_nullable ||
-      T->getAttrKind() == AttributedType::attr_null_unspecified)
-    return printAfter(T->getModifiedType(), OS);
-
-  // If this is a calling convention attribute, don't print the implicit CC from
-  // the modified type.
-  SaveAndRestore<bool> MaybeSuppressCC(InsideCCAttribute, T->isCallingConv());
-
-  printAfter(T->getModifiedType(), OS);
-
-  // Don't print the inert __unsafe_unretained attribute at all.
-  if (T->getAttrKind() == AttributedType::attr_objc_inert_unsafe_unretained)
-    return;
-
-  // Don't print ns_returns_retained unless it had an effect.
-  if (T->getAttrKind() == AttributedType::attr_ns_returns_retained &&
-      !T->getEquivalentType()->castAs<FunctionType>()
-                             ->getExtInfo().getProducesResult())
-    return;
-
-  // Print nullability type specifiers that occur after
-  if (T->getAttrKind() == AttributedType::attr_nonnull ||
-      T->getAttrKind() == AttributedType::attr_nullable ||
-      T->getAttrKind() == AttributedType::attr_null_unspecified) {
-    if (T->getAttrKind() == AttributedType::attr_nonnull)
-      OS << " _Nonnull";
-    else if (T->getAttrKind() == AttributedType::attr_nullable)
-      OS << " _Nullable";
-    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
-      OS << " _Null_unspecified";
-    else
-      llvm_unreachable("unhandled nullability");
-
-    return;
-  }
-
-  OS << " __attribute__((";
   switch (T->getAttrKind()) {
-  default: llvm_unreachable("This attribute should have been handled already");
+  default:
+    // [port] CHANGED: Added this `if`. See [pretty-print].
+    if (Policy.PolishForInlineDeclaration) {
+      return false;
+    }
+    llvm_unreachable("This attribute should have been handled already");
   case AttributedType::attr_address_space:
     OS << "address_space(";
     // FIXME: printing the raw LangAS value is wrong. This should probably
@@ -1464,13 +1389,13 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   case AttributedType::attr_pcs:
   case AttributedType::attr_pcs_vfp: {
     OS << "pcs(";
-   QualType t = T->getEquivalentType();
-   while (!t->isFunctionType())
-     t = t->getPointeeType();
-   OS << (t->getAs<FunctionType>()->getCallConv() == CC_AAPCS ?
-         "\"aapcs\"" : "\"aapcs-vfp\"");
-   OS << ')';
-   break;
+    QualType t = T->getEquivalentType();
+    while (!t->isFunctionType())
+      t = t->getPointeeType();
+    OS << (t->getAs<FunctionType>()->getCallConv() == CC_AAPCS ?
+          "\"aapcs\"" : "\"aapcs-vfp\"");
+    OS << ')';
+    break;
   }
 
   case AttributedType::attr_inteloclbicc: OS << "inteloclbicc"; break;
@@ -1483,6 +1408,117 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
     break;
   }
   OS << "))";
+
+  // [port] CHANGED: Added this `return`. See [pretty-print].
+  return true;
+}
+
+void TypePrinter::printAttributedBefore(const AttributedType *T,
+                                        raw_ostream &OS) {
+  // Prefer the macro forms of the GC and ownership qualifiers.
+  if (T->getAttrKind() == AttributedType::attr_objc_gc ||
+      T->getAttrKind() == AttributedType::attr_objc_ownership)
+    return printBefore(T->getEquivalentType(), OS);
+
+  if (T->getAttrKind() == AttributedType::attr_objc_kindof)
+    OS << "__kindof ";
+
+  // [port] CHANGED: Added this `if`. See [pretty-print].
+  if (Policy.PolishForInlineDeclaration) {
+    std::string attr;
+    llvm::raw_string_ostream ss(attr);
+    if (printAttribute(T, ss)) {
+      ss.flush();
+      OS << attr << " ";
+    }
+  }
+
+  printBefore(T->getModifiedType(), OS);
+
+  if (T->isMSTypeSpec()) {
+    switch (T->getAttrKind()) {
+    default: return;
+    case AttributedType::attr_ptr32: OS << " __ptr32"; break;
+    case AttributedType::attr_ptr64: OS << " __ptr64"; break;
+    case AttributedType::attr_sptr: OS << " __sptr"; break;
+    case AttributedType::attr_uptr: OS << " __uptr"; break;
+    }
+    spaceBeforePlaceHolder(OS);
+  }
+
+  // Print nullability type specifiers.
+  if (T->getAttrKind() == AttributedType::attr_nonnull ||
+      T->getAttrKind() == AttributedType::attr_nullable ||
+      T->getAttrKind() == AttributedType::attr_null_unspecified) {
+    if (T->getAttrKind() == AttributedType::attr_nonnull)
+      OS << " _Nonnull";
+    else if (T->getAttrKind() == AttributedType::attr_nullable)
+      OS << " _Nullable";
+    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
+      OS << " _Null_unspecified";
+    else
+      llvm_unreachable("unhandled nullability");
+    spaceBeforePlaceHolder(OS);
+  }
+}
+
+void TypePrinter::printAttributedAfter(const AttributedType *T,
+                                       raw_ostream &OS) {
+  // Prefer the macro forms of the GC and ownership qualifiers.
+  if (T->getAttrKind() == AttributedType::attr_objc_gc ||
+      T->getAttrKind() == AttributedType::attr_objc_ownership)
+    return printAfter(T->getEquivalentType(), OS);
+
+  if (T->getAttrKind() == AttributedType::attr_objc_kindof)
+    return;
+
+  // TODO: not all attributes are GCC-style attributes.
+  if (T->isMSTypeSpec())
+    return;
+
+  // Nothing to print after.
+  if (T->getAttrKind() == AttributedType::attr_nonnull ||
+      T->getAttrKind() == AttributedType::attr_nullable ||
+      T->getAttrKind() == AttributedType::attr_null_unspecified)
+    return printAfter(T->getModifiedType(), OS);
+
+  // If this is a calling convention attribute, don't print the implicit CC from
+  // the modified type.
+  SaveAndRestore<bool> MaybeSuppressCC(InsideCCAttribute, T->isCallingConv());
+
+  printAfter(T->getModifiedType(), OS);
+
+  // Don't print the inert __unsafe_unretained attribute at all.
+  if (T->getAttrKind() == AttributedType::attr_objc_inert_unsafe_unretained)
+    return;
+
+  // Don't print ns_returns_retained unless it had an effect.
+  if (T->getAttrKind() == AttributedType::attr_ns_returns_retained &&
+      !T->getEquivalentType()->castAs<FunctionType>()
+                             ->getExtInfo().getProducesResult())
+    return;
+
+  // Print nullability type specifiers that occur after
+  if (T->getAttrKind() == AttributedType::attr_nonnull ||
+      T->getAttrKind() == AttributedType::attr_nullable ||
+      T->getAttrKind() == AttributedType::attr_null_unspecified) {
+    if (T->getAttrKind() == AttributedType::attr_nonnull)
+      OS << " _Nonnull";
+    else if (T->getAttrKind() == AttributedType::attr_nullable)
+      OS << " _Nullable";
+    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
+      OS << " _Null_unspecified";
+    else
+      llvm_unreachable("unhandled nullability");
+
+    return;
+  }
+
+  // [port] CHANGED: Added `!Policy.PolishForInlineDeclaration`. See
+  // [port] [pretty-print].
+  if (!Policy.PolishForInlineDeclaration) {
+    printAttribute(T, OS);
+  }
 }
 
 void TypePrinter::printObjCInterfaceBefore(const ObjCInterfaceType *T, 
