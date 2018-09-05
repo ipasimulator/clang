@@ -110,7 +110,9 @@ public:
   bool isLateParsed() const { return IsLateParsed; }
 
   // Pretty print this attribute.
-  void printPretty(raw_ostream &OS, const PrintingPolicy &Policy) const;
+  // [port] CHANGED: Added parameter `C`. See [pretty-print].
+  void printPretty(raw_ostream &OS, const PrintingPolicy &Policy,
+                   const ASTContext &C) const;
 };
 
 class StmtAttr : public Attr {

@@ -1171,6 +1171,11 @@ namespace {
       OS << "SA->" << getLowerName() << "_begin() != "
          << "SA->" << getLowerName() << "_end()";
     }
+
+    // [port] CHANGED: Added this function. See [pretty-print].
+    void writeValueImpl(raw_ostream &OS) const override {
+      OS << "    printExprAsWritten(OS, Val, &C);\n";
+    }
   };
 
   class VariadicIdentifierArgument : public VariadicArgument {
@@ -1356,8 +1361,9 @@ writePrettyPrintFunction(Record &R,
                          raw_ostream &OS) {
   std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
 
+  // [port] CHANGED: Added parameter `C`. See [pretty-print].
   OS << "void " << R.getName() << "Attr::printPretty("
-    << "raw_ostream &OS, const PrintingPolicy &Policy) const {\n";
+    << "raw_ostream &OS, const PrintingPolicy &Policy, const ASTContext &C) const {\n";
 
   if (Spellings.empty()) {
     OS << "}\n\n";
@@ -2336,8 +2342,10 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     }
 
     OS << "  " << R.getName() << "Attr *clone(ASTContext &C) const;\n";
+    // [port] CHANGED: Added parameter `C`. See [pretty-print].
     OS << "  void printPretty(raw_ostream &OS,\n"
-       << "                   const PrintingPolicy &Policy) const;\n";
+       << "                   const PrintingPolicy &Policy,\n"
+       << "                   const ASTContext &C) const;\n";
     OS << "  const char *getSpelling() const;\n";
     
     if (!ElideSpelling) {
@@ -2437,9 +2445,11 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   OS << "Attr *Attr::clone(ASTContext &C) const {\n";
   EmitFunc("clone(C)");
 
+  // [port] CHANGED: Added parameter `C`. See [pretty-print].
   OS << "void Attr::printPretty(raw_ostream &OS, "
-        "const PrintingPolicy &Policy) const {\n";
-  EmitFunc("printPretty(OS, Policy)");
+        "const PrintingPolicy &Policy, "
+        "const ASTContext &C) const {\n";
+  EmitFunc("printPretty(OS, Policy, C)");
 }
 
 } // end namespace clang

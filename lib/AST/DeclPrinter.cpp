@@ -223,7 +223,8 @@ void DeclPrinter::prettyPrintAttributes(Decl *D) {
 #include "clang/Basic/AttrList.inc"
         break;
       default:
-        A->printPretty(Out, Policy);
+        // [port] CHANGED: Passed parameter `Context`. See [pretty-print].
+        A->printPretty(Out, Policy, Context);
         break;
       }
     }
@@ -241,7 +242,8 @@ void DeclPrinter::prettyPrintPragmas(Decl *D) {
 #define ATTR(X)
 #define PRAGMA_SPELLING_ATTR(X) case attr::X:
 #include "clang/Basic/AttrList.inc"
-        A->printPretty(Out, Policy);
+        // [port] CHANGED: Passed parameter `Context`. See [pretty-print].
+        A->printPretty(Out, Policy, Context);
         Indent();
         break;
       default:
