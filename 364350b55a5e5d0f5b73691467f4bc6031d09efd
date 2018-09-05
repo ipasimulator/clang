@@ -1,0 +1,12 @@
+[ver:1,total:4260]
+utils/TableGen/ClangAttrEmitter.cpp:1311,1536163200:840,1536166800:471,m
+lib/AST/DeclPrinter.cpp:1284,1536163200:631,1536166800:653,m
+lib/AST/AttrImpl.cpp:536,1536163200:60,1536166800:476,m
+include/clang/AST/Attr.h:331,1536163200:150,1536166800:181,m
+lib/AST/TypePrinter.cpp:300,1536163200:300,r
+lib/AST/StmtPrinter.cpp:168,1536163200:89,1536166800:79,m
+include/clang/Basic/Attr.td:150,1536163200:150,r
+include/clang/AST/DeclVisitor.h:60,1536163200:60,r
+include/clang/AST/CMakeLists.txt:60,1536163200:60,r
+utils/TableGen/TableGen.cpp:30,1536163200:30,r
+include/clang/AST/StmtVisitor.h:30,1536163200:30,r
