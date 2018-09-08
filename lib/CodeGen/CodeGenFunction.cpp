@@ -1353,8 +1353,11 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     emitImplicitAssignmentOperatorBody(Args);
   } else if (Body) {
     EmitFunctionBody(Args, Body);
-  } else
+  } else if (!CGM.getLangOpts().EmitAllDecls) {
+    // [port] CHANGED: ^ Added `!CGM.getLangOpts().EmitAllDecls`. We want to
+    // [port] allow empty bodies if we emit all declarations.
     llvm_unreachable("no definition for emitted function");
+  }
 
   // C++11 [stmt.return]p2:
   //   Flowing off the end of a function [...] results in undefined behavior in
