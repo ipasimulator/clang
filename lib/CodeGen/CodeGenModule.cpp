@@ -2034,7 +2034,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (const auto *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.
     // [port] CHANGED: Added `!LangOpts.EmitAllDecls`. So that really all
-    // [port] declarations are emitted (even of functions without bodies).
+    // [port] declarations are emitted (even of functions without bodies). See
+    // [port] [emit-all-decls].
     if (!FD->doesThisDeclarationHaveABody() && !LangOpts.EmitAllDecls) {
       if (!FD->doesDeclarationForceExternallyVisibleDefinition())
         return;
