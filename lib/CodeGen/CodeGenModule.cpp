@@ -2034,7 +2034,10 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (const auto *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.
     if (!FD->doesThisDeclarationHaveABody()) {
-      if (!FD->doesDeclarationForceExternallyVisibleDefinition())
+      // [port] CHANGED: Added `!LangOpts.EmitAllDecls`. So that really all
+      // [port] declarations are emitted (even of functions without bodies).
+      if (!FD->doesDeclarationForceExternallyVisibleDefinition() &&
+          !LangOpts.EmitAllDecls)
         return;
 
       StringRef MangledName = getMangledName(GD);
