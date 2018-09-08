@@ -1355,7 +1355,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     EmitFunctionBody(Args, Body);
   } else if (!CGM.getLangOpts().EmitAllDecls) {
     // [port] CHANGED: ^ Added `!CGM.getLangOpts().EmitAllDecls`. We want to
-    // [port] allow empty bodies if we emit all declarations.
+    // [port] allow empty bodies if we emit all declarations. See
+    // [port] [emit-all-decls].
     llvm_unreachable("no definition for emitted function");
   }
 
