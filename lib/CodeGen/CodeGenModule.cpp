@@ -4456,6 +4456,27 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // Forward declarations, no (immediate) code generation.
   case Decl::ObjCInterface:
   case Decl::ObjCCategory:
+    // [port] CHANGED: Added this `if`. See [emit-all-decls].
+    if (LangOpts.EmitAllDecls) {
+      auto *Container = cast<ObjCContainerDecl>(D);
+
+      // Find the corresponding interface.
+      ObjCInterfaceDecl *Iface;
+      if (auto *IfaceDecl = dyn_cast<ObjCInterfaceDecl>(D))
+        Iface = IfaceDecl;
+      else
+        Iface = cast<ObjCCategoryDecl>(D)->getClassInterface();
+
+      // Generate methods.
+      for (ObjCMethodDecl *Method : Container->methods()) {
+        // Fix up.
+        Method->createImplicitParams(D->getASTContext(), Iface);
+
+        CodeGenFunction(*this).GenerateObjCMethod(Method);
+      }
+
+      // [port] TODO: Also generate its protocols' methods.
+    }
     break;
 
   case Decl::ObjCProtocol: {
