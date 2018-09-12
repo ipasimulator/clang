@@ -572,9 +572,12 @@ static llvm::Value *emitARCRetainLoadOfScalar(CodeGenFunction &CGF,
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   StartObjCMethod(OMD, OMD->getClassInterface());
   PGO.assignRegionCounters(GlobalDecl(OMD), CurFn);
-  assert(isa<CompoundStmt>(OMD->getBody()));
-  incrementProfileCounter(OMD->getBody());
-  EmitCompoundStmtWithoutScope(*cast<CompoundStmt>(OMD->getBody()));
+  // [port] CHANGED: Added `OMD->getBody()`. See [emit-all-decls].
+  if (OMD->getBody()) {
+    assert(isa<CompoundStmt>(OMD->getBody()));
+    incrementProfileCounter(OMD->getBody());
+    EmitCompoundStmtWithoutScope(*cast<CompoundStmt>(OMD->getBody()));
+  }
   FinishFunction(OMD->getBodyRBrace());
 }
 
