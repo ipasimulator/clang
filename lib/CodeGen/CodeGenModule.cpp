@@ -4374,6 +4374,31 @@ void CodeGenModule::emitDecls(ObjCInterfaceDecl *Iface,
     CodeGenFunction(*this).GenerateObjCMethod(Method);
   }
 
+  // Generate its properties, too. Inspired by
+  // `CodeGenModule::EmitObjCPropertyImplementations`.
+  // [port] TODO: Note that this is actually never used, since getters and
+  // [port] setters are already among the container's methods.
+  for (ObjCPropertyDecl *Property : Container->properties()) {
+    // [port] TODO: Share the code.
+    if (!Container->getInstanceMethod(Property->getGetterName())) {
+      // Inspired by `CodeGenFunction::GenerateObjCGetter`.
+      ObjCMethodDecl *OMD = Property->getGetterMethodDecl();
+      assert(OMD && "Invalid call to generate getter (empty method)");
+      CodeGenFunction CGF(*this);
+      CGF.StartObjCMethod(OMD, Iface);
+      CGF.FinishFunction();
+    }
+    if (!Property->isReadOnly() &&
+        !Container->getInstanceMethod(Property->getSetterName())) {
+      // Inspired by `GenerateObjCGetter::GenerateObjCSetter`.
+      ObjCMethodDecl *OMD = Property->getSetterMethodDecl();
+      assert(OMD && "Invalid call to generate setter (empty method)");
+      CodeGenFunction CGF(*this);
+      CGF.StartObjCMethod(OMD, Iface);
+      CGF.FinishFunction();
+    }
+  }
+
   // And also generate its protocols' methods (recursively).
   for (ObjCProtocolDecl *Proto : Protos) {
     emitDecls(Iface, Proto, Proto->protocols());
