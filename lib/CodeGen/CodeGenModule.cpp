@@ -4604,6 +4604,25 @@ void CodeGenModule::EmitDeclContext(const DeclContext *DC) {
   }
 }
 
+// [port] CHANGED: Added this method. See [emit-all-decls].
+void CodeGenModule::emitDecls(ObjCInterfaceDecl *Iface,
+                              ObjCContainerDecl *Container,
+                              ObjCInterfaceDecl::protocol_range Protos) {
+  // Generate the container's own methods.
+  for (ObjCMethodDecl *Method : Container->methods()) {
+    // Fix up.
+    Method->setClassInterface(Iface);
+    Method->createImplicitParams(Container->getASTContext(), Iface);
+
+    CodeGenFunction(*this).GenerateObjCMethod(Method);
+  }
+
+  // And also generate its protocols' methods (recursively).
+  for (ObjCProtocolDecl *Proto : Protos) {
+    emitDecls(Iface, Proto, Proto->protocols());
+  }
+}
+
 /// EmitTopLevelDecl - Emit code for a single top level declaration.
 void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // Ignore dependent declarations.
@@ -4703,22 +4722,15 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     if (LangOpts.EmitAllDecls) {
       auto *Container = cast<ObjCContainerDecl>(D);
 
-      // Find the corresponding interface.
-      ObjCInterfaceDecl *Iface;
-      if (auto *IfaceDecl = dyn_cast<ObjCInterfaceDecl>(D))
-        Iface = IfaceDecl;
-      else
-        Iface = cast<ObjCCategoryDecl>(D)->getClassInterface();
-
-      // Generate methods.
-      for (ObjCMethodDecl *Method : Container->methods()) {
-        // Fix up.
-        Method->createImplicitParams(D->getASTContext(), Iface);
-
-        CodeGenFunction(*this).GenerateObjCMethod(Method);
+      // Find the corresponding interface and also a list of protocols
+      // implemented and then emit method declarations.
+      if (auto *IfaceDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
+        emitDecls(IfaceDecl, Container, IfaceDecl->protocols());
+      } else {
+        auto *CategoryDecl = cast<ObjCCategoryDecl>(D);
+        emitDecls(CategoryDecl->getClassInterface(), Container,
+                  CategoryDecl->protocols());
       }
-
-      // [port] TODO: Also generate its protocols' methods.
     }
     break;
 
