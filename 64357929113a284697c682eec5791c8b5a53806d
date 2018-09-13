@@ -1,0 +1,8 @@
+[ver:1,total:2160]
+lib/CodeGen/CodeGenModule.cpp:1158,1536843600:1158,m
+include/clang/AST/DeclObjC.h:712,1536843600:712,r
+lib/CodeGen/CGObjC.cpp:165,1536843600:165,r
+lib/CodeGen/CodeGenFunction.cpp:60,1536843600:60,r
+lib/CodeGen/CodeGenFunction.h:30,1536843600:30,r
+lib/AST/DeclObjC.cpp:20,1536843600:20,r
+lib/CodeGen/CGObjCMac.cpp:15,1536843600:15,r
