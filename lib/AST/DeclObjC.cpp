@@ -1103,7 +1103,8 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   if (auto *IMD = dyn_cast<ObjCImplDecl>(getDeclContext()))
     return IMD->getClassInterface();
   if (isa<ObjCProtocolDecl>(getDeclContext()))
-    return nullptr;
+    // [port] CHANGED: `nullptr` -> `IfaceDecl`. See [emit-all-decls].
+    return IfaceDecl;
   llvm_unreachable("unknown method context");
 }
 

@@ -929,6 +929,10 @@ public:
                                         unsigned BuiltinID);
 
   llvm::Function *getIntrinsic(unsigned IID, ArrayRef<llvm::Type*> Tys = None);
+  
+  // [port] CHANGED: Added this method. See [emit-all-decls].
+  void emitDecls(ObjCInterfaceDecl *Iface, ObjCContainerDecl *Container,
+                 ObjCInterfaceDecl::protocol_range Protos);
 
   /// Emit code for a single top level declaration.
   void EmitTopLevelDecl(Decl *D);

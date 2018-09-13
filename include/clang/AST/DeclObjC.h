@@ -214,6 +214,9 @@ private:
   /// constructed by createImplicitParams.
   ImplicitParamDecl *CmdDecl = nullptr;
 
+  // [port] CHANGED: Added this field. See [emit-all-decls].
+  ObjCInterfaceDecl *IfaceDecl = nullptr;
+
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T, TypeSourceInfo *ReturnTInfo,
                  DeclContext *contextDecl, bool isInstance = true,
@@ -354,6 +357,14 @@ public:
   ObjCInterfaceDecl *getClassInterface();
   const ObjCInterfaceDecl *getClassInterface() const {
     return const_cast<ObjCMethodDecl*>(this)->getClassInterface();
+  }
+  // [port] CHANGED: Added this function. See [emit-all-decls].
+  void setClassInterface(ObjCInterfaceDecl *OID) {
+    if (isa<ObjCProtocolDecl>(getDeclContext()))
+      IfaceDecl = OID;
+    else
+      assert(getClassInterface() == OID &&
+             "Only protocol methods can have custom interface set.");
   }
 
   Selector getSelector() const { return getDeclName().getObjCSelector(); }
