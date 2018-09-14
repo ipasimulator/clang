@@ -1110,9 +1110,13 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   if (Sanitize.needsEsanRt())
     AddLinkSanitizerLibArgs(Args, CmdArgs, "esan");
 
-  // Otherwise link libSystem, then the dynamic runtime library, and finally any
-  // target specific static runtime library.
-  CmdArgs.push_back("-lSystem");
+  // [port] CHANGED: Added `!Args.hasArg(options::OPT_no_lsystem)`. See
+  // [port] [no-lsystem].
+  if (!Args.hasArg(options::OPT_no_lsystem)) {
+    // Otherwise link libSystem, then the dynamic runtime library, and finally
+    // any target specific static runtime library.
+    CmdArgs.push_back("-lSystem");
+  }
 
   // Select the dynamic runtime library and the target specific static library.
   if (isTargetWatchOSBased()) {

@@ -2477,6 +2477,9 @@ def x : JoinedOrSeparate<["-"], "x">, Flags<[DriverOption,CC1Option]>,
   MetaVarName<"<language>">;
 def y : Joined<["-"], "y">;
 
+// [port] CHANGED: Added this `def`. See [no-lsystem].
+def no_lsystem : Flag<["-", "--"], "no_lsystem">;
+
 def fintegrated_as : Flag<["-"], "fintegrated-as">, Flags<[DriverOption]>,
                      Group<f_Group>, HelpText<"Enable the integrated assembler">;
 def fno_integrated_as : Flag<["-"], "fno-integrated-as">,
