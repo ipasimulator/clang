@@ -1352,7 +1352,9 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     // copy-constructors.
     emitImplicitAssignmentOperatorBody(Args);
   } else if (Body) {
-    EmitFunctionBody(Args, Body);
+    // [port] CHANGED: Added `CGM.getLangOpts().EmitBodies`. See [emit-bodies].
+    if (CGM.getLangOpts().EmitBodies)
+      EmitFunctionBody(Args, Body);
   } else if (!CGM.getLangOpts().EmitAllDecls) {
     // [port] CHANGED: ^ Added `!CGM.getLangOpts().EmitAllDecls`. We want to
     // [port] allow empty bodies if we emit all declarations. See
