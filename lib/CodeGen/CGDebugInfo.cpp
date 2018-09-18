@@ -294,9 +294,14 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   } else if (isa<ObjCProtocolDecl>(DC)) {
     // We can extract the type of the class from the self pointer.
     if (ImplicitParamDecl *SelfDecl = OMD->getSelfDecl()) {
-      QualType ClassTy =
-          cast<ObjCObjectPointerType>(SelfDecl->getType())->getPointeeType();
-      ClassTy.print(OS, PrintingPolicy(LangOptions()));
+      // [port] CHANGED: From `cast` to `if ... dyn_cast`. When we set
+      // [port] `SelfDecl` ourselves (see [emit-all-decls]), it has not this
+      // [port] type.
+      // [port] TODO: Why?
+      if (auto *OPT = dyn_cast<ObjCObjectPointerType>(SelfDecl->getType())) {
+        QualType ClassTy = OPT->getPointeeType();
+        ClassTy.print(OS, PrintingPolicy(LangOptions()));
+      }
     }
   }
   OS << ' ' << OMD->getSelector().getAsString() << ']';
