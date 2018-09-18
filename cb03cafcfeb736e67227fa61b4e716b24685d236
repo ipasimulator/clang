@@ -1,0 +1,9 @@
+[ver:1,total:1620]
+lib/CodeGen/CodeGenModule.cpp:820,1537264800:300,1537268400:520,r
+lib/CodeGen/CGDebugInfo.cpp:540,1537264800:30,1537268400:330,1537279200:180,m
+lib/AST/DeclObjC.cpp:85,1537268400:85,r
+lib/CodeGen/CodeGenFunction.cpp:60,1537264800:60,r
+lib/CodeGen/CGObjC.cpp:60,1537264800:30,1537268400:30,r
+include/clang/AST/ASTContext.h:35,1537268400:35,r
+lib/AST/DeclBase.cpp:10,1537268400:10,r
+lib/AST/ASTContext.cpp:10,1537268400:10,r
